@@ -15,7 +15,7 @@ Cart.updateBadge();
 
 const productCard = (p) => `
   <a class="card" href="product.html?id=${p.id}">
-    <div class="thumb"><span>${p.name}</span></div>
+    <div class="thumb">${p.id <= 2 ? '<em class="tag">NEW</em>' : ""}<span>${p.name}</span></div>
     <div class="card-name">${p.name}</div>
     <div class="card-price">${won(p.price)}</div>
   </a>`;
