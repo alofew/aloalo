@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CART — ALOALO</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header id="site-header"></header>
+<main class="section"><h2>CART</h2><div id="cart"></div></main>
+<footer id="site-footer"></footer>
+<script src="js/data.js"></script><script src="js/cart.js"></script><script src="js/main.js"></script>
+<script>
+const draw = () => {
+  const items = Cart.load();
+  const el = document.getElementById("cart");
+  if (!items.length) { el.innerHTML = "<p>장바구니가 비어 있습니다.</p>"; return; }
+  el.innerHTML = items.map(i => { const p = PRODUCTS.find(x => x.id === i.id); return `
+    <div class="row"><span>${p.name} / ${i.size}</span>
+    <span><button data-a="-" data-id="${i.id}" data-s="${i.size}">−</button> ${i.qty}
+    <button data-a="+" data-id="${i.id}" data-s="${i.size}">+</button></span>
+    <span>${won(p.price*i.qty)}</span>
+    <button data-a="x" data-id="${i.id}" data-s="${i.size}">✕</button></div>`; }).join("")
+    + `<div class="total">TOTAL ${won(Cart.total())}</div><button class="btn" onclick="alert('학습용 프로젝트라 결제는 지원하지 않습니다.')">CHECKOUT</button>`;
+  el.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+    const id = Number(b.dataset.id), s = b.dataset.s, cur = Cart.load().find(i => i.id === id && i.size === s).qty;
+    if (b.dataset.a === "+") Cart.setQty(id, s, cur + 1);
+    else if (b.dataset.a === "-") Cart.setQty(id, s, cur - 1);
+    else Cart.remove(id, s);
+    draw();
+  });
+};
+draw();
+</script>
+</body></html>

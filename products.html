@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHOP — ALOALO</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header id="site-header"></header>
+<main class="section">
+  <div class="toolbar">
+    <div id="filters" class="filters"></div>
+    <select id="sort"><option value="new">NEWEST</option><option value="low">PRICE ↑</option><option value="high">PRICE ↓</option></select>
+  </div>
+  <div class="grid" id="list"></div>
+</main>
+<footer id="site-footer"></footer>
+<script src="js/data.js"></script><script src="js/cart.js"></script><script src="js/main.js"></script>
+<script>
+let cat = "all";
+const render = () => {
+  let items = PRODUCTS.filter(p => cat === "all" || p.category === cat);
+  const s = document.getElementById("sort").value;
+  if (s === "low") items.sort((a,b)=>a.price-b.price);
+  if (s === "high") items.sort((a,b)=>b.price-a.price);
+  document.getElementById("list").innerHTML = items.map(productCard).join("");
+  document.getElementById("filters").innerHTML = CATEGORIES.map(c =>
+    `<button class="${c.key===cat?"on":""}" data-k="${c.key}">${c.label}</button>`).join("");
+  document.querySelectorAll("#filters button").forEach(b => b.onclick = () => { cat = b.dataset.k; render(); });
+};
+document.getElementById("sort").onchange = render;
+render();
+</script>
+</body></html>
