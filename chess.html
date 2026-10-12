@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHESS — ALOALO</title><link rel="stylesheet" href="css/chess.css"></head><body>
+<main class="wrap">
+  <h1>CHESS</h1>
+  <div class="layout">
+    <div class="board-box">
+      <div class="status" id="status"></div>
+      <div class="board" id="board" role="grid" aria-label="체스판"></div>
+    </div>
+    <aside class="panel">
+      <label>내 색깔
+        <select id="side"><option value="w">백 (선공)</option><option value="b">흑 (후공)</option></select>
+      </label>
+      <label>난이도
+        <select id="level"><option value="1">쉬움</option><option value="2" selected>보통</option><option value="3">어려움</option></select>
+      </label>
+      <div class="btns"><button id="new">새 게임</button><button id="undo">무르기</button></div>
+      <h2>기록</h2>
+      <ol class="moves" id="moves"></ol>
+    </aside>
+  </div>
+  <div class="modal" id="promo" hidden><div class="promo-box" id="promoBox"></div></div>
+</main>
+<script src="js/chess-engine.js"></script><script src="js/chess.js"></script>
+</body></html>
