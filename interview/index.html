@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>생기부 면접 문제은행</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one column like a 학생부 cue card — filters, the drawn question card, then the full question index */
+:root{
+  --bg:#EEF1F3; --paper:#FFFFFF; --ink:#18212B; --muted:#5B6672; --line:#D6DCE1;
+  --accent:#1D6B57; --accent-soft:#DCEDE6; --mark:#E9F5A8; --warn:#B4472B; --warn-soft:#F8E3DC; --ai:#3B4FA0; --ai-soft:#E3E7F6;
+  --f-display:"Nanum Myeongjo","AppleMyungjo","Batang",serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171C; --paper:#1A2128; --ink:#E6EBEF; --muted:#98A3AE; --line:#2C353E;
+  --accent:#5FC2A3; --accent-soft:#1D3530; --mark:#4A5320; --warn:#F08A6C; --warn-soft:#3A231C; --ai:#9AAAF0; --ai-soft:#242B47; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171C; --paper:#1A2128; --ink:#E6EBEF; --muted:#98A3AE; --line:#2C353E;
+  --accent:#5FC2A3; --accent-soft:#1D3530; --mark:#4A5320; --warn:#F08A6C; --warn-soft:#3A231C; --ai:#9AAAF0; --ai-soft:#242B47; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+h1{font-family:var(--f-display);font-size:30px;line-height:1.25;margin:0;text-wrap:balance}
+.progress-line{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;max-width:240px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.filters{display:flex;flex-direction:column;gap:10px}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted);width:52px;flex-shrink:0}
+.chip{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:focus-visible,.btn:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.qlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select{font:inherit;font-size:13px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);max-width:100%}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 20px;display:flex;flex-direction:column;gap:16px;box-shadow:0 1px 0 var(--line)}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.tag.done{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.tag.ai{background:var(--ai-soft);color:var(--ai);border-color:transparent}
+.source{font-size:13px;color:var(--muted);margin-top:-6px}
+.question{font-family:var(--f-display);font-size:23px;line-height:1.5;margin:0;text-wrap:pretty;word-break:keep-all}
+.intent{font-size:13px;color:var(--ai);margin-top:-8px}
+
+.timer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--bg)}
+.clock{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;min-width:72px}
+.clock.over{color:var(--warn)}
+.tbar{flex:1 1 120px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.tbar i{display:block;height:100%;width:0;background:var(--accent)}
+.tbar.over i{background:var(--warn)}
+.seg{display:flex;gap:4px}
+.seg .chip{padding:3px 9px;font-size:12px}
+
+textarea{width:100%;min-height:110px;resize:vertical;font:inherit;font-size:14px;line-height:1.6;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+textarea::placeholder{color:var(--muted)}
+
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{appearance:none;font:inherit;font-size:14px;font-weight:500;padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.btn.ai{background:var(--ai-soft);border-color:transparent;color:var(--ai)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ok[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.spacer{flex:1}
+
+.panel{border-left:3px solid var(--accent);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+.panel.follow{border-color:var(--muted)}
+.panel.caution{border-color:var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:0 8px 8px 0}
+.panel h3{margin:0;font-size:12px;letter-spacing:.04em;color:var(--muted);font-weight:600}
+.panel ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.panel mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:2px}
+.feedback{background:var(--ai-soft);border-radius:10px;padding:14px 16px;white-space:pre-wrap;word-break:keep-all;font-size:14px;line-height:1.7}
+.feedback .h{display:block;font-weight:700;color:var(--ai);margin-top:8px}
+.feedback .h:first-child{margin-top:0}
+.note{font-size:12px;color:var(--muted)}
+.divider{height:1px;background:var(--line);margin:2px 0}
+
+.index h2{font-size:15px;margin:0 0 8px}
+details{border-top:1px solid var(--line)}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:12px 2px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+summary .num{color:var(--muted);font-weight:500;font-size:12px}
+.qlist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column}
+.qlink{all:unset;cursor:pointer;display:grid;grid-template-columns:18px 1fr;gap:8px;padding:7px 4px;border-radius:6px;font-size:13.5px;line-height:1.5;word-break:keep-all}
+.qlink:hover{background:var(--paper)}
+.qlink .dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted);margin-top:6px}
+.qlink.practiced .dot{background:var(--accent);border-color:var(--accent)}
+.qlink small{display:block;color:var(--muted);font-size:12px}
+footer{font-size:12px;color:var(--muted)}
+@media (max-width:480px){h1{font-size:25px}.question{font-size:20px}.card{padding:18px 16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">노션 「생기부 정리」 기준 · 10/26 원문 대조본</div>
+    <h1>생기부 면접 문제은행</h1>
+    <div class="progress-line"><span>연습 완료 <b class="num" id="doneCount">0</b> / <span class="num" id="totalCount">0</span></span><div class="bar"><i id="doneBar"></i></div></div>
+  </header>
+
+  <section class="filters" aria-label="출제 범위">
+    <div class="frow"><span class="flabel">학년</span><div class="frow" id="fGrade"></div></div>
+    <div class="frow"><span class="flabel">영역</span><div class="frow" id="fArea"></div></div>
+    <div class="frow"><span class="flabel">옵션</span>
+      <button class="chip" id="fDone" aria-pressed="false">정리노트 활동만</button>
+      <button class="chip" id="fFresh" aria-pressed="true">안 푼 문제 먼저</button>
+    </div>
+    <div class="frow"><span class="flabel">면접</span>
+      <select id="univ" aria-label="지원 대학">
+        <option>인천대 경영학과</option><option>명지대 경제학과</option><option>가톨릭대 경제학과</option><option>수원대 경영공학대학</option>
+      </select>
+    </div>
+  </section>
+
+  <article class="card" id="card" aria-live="polite">
+    <div class="meta" id="meta"></div>
+    <div class="source" id="source"></div>
+    <p class="question" id="question"></p>
+    <div class="intent" id="intent" hidden></div>
+
+    <div class="timer">
+      <span class="clock" id="clock">1:30</span>
+      <div class="tbar" id="tbar"><i id="tfill"></i></div>
+      <div class="seg" id="tLen"></div>
+      <button class="btn" id="tBtn">답변 시작</button>
+    </div>
+
+    <textarea id="answer" placeholder="말할 답변을 적어보세요. AI 피드백은 이 내용을 기준으로 봐요."></textarea>
+
+    <div class="actions">
+      <button class="btn" id="btnPoints">핵심 포인트</button>
+      <button class="btn" id="btnFollow">꼬리질문</button>
+      <button class="btn ai" id="btnFeedback" hidden>AI 피드백</button>
+    </div>
+
+    <div class="panel" id="pPoints" hidden><h3>답변에 꼭 넣을 것</h3><ul id="points"></ul></div>
+    <div class="panel caution" id="pCaution" hidden><h3>주의</h3><div id="caution"></div></div>
+    <div class="panel follow" id="pFollow" hidden><h3>예상 꼬리질문</h3><div id="follow"></div></div>
+    <div id="fbWrap" hidden><div class="feedback" id="feedback"></div><div class="actions" style="margin-top:8px"><button class="btn" id="fbStop" hidden>멈추기</button></div></div>
+
+    <div class="divider"></div>
+    <div class="actions">
+      <button class="btn ok" id="btnDone" aria-pressed="false">연습 완료</button>
+      <span class="spacer"></span>
+      <button class="btn primary" id="btnNext">다음 문제</button>
+    </div>
+    <div class="actions" id="aiRow" hidden>
+      <button class="btn ai" id="btnGen">이 활동으로 새 질문</button>
+      <button class="btn ai" id="btnMix">활동 2개 엮은 질문</button>
+    </div>
+    <div class="note" id="aiNote"></div>
+  </article>
+
+  <section class="index">
+    <h2>전체 문제</h2>
+    <div id="index"></div>
+  </section>
+
+  <footer>문제는 학생부에 적힌 내용만으로 만들었어요. 활동 세부 답변은 노션 「생기부 면접준비 노트」 ①~⑰과 함께 보세요.</footer>
+</div>
+
+<script>
+const PROFILE = "고3 학생. 희망 진로: 사업가/경영인, 상경계열, 마케팅·브랜딩·소비자행동. 행발: 1학년 솔직담백·낙천적·주체적 사고, 사업가 희망 설정 / 2학년 평소 차분하나 프로젝트에서 열정적, 리더십, 경영학 전공 희망, 체계적 자기관리 / 3학년 미기재.";
+
+// g: 학년(0=공통), a: 영역, n: 정리노트 번호, t: 활동명, d: 학생부 내용, q: [질문, 핵심포인트[], 꼬리질문, 주의?]
+const ACTS = [
+ {g:0,a:"공통",t:"지원 동기·진로",d:"진로 사업가/경영인. 마케팅·브랜딩·소비자행동 관심. 1학년 '돈의 속성' 독서로 사업가 목표 재설정, 2학년 경영학 전공 희망.",q:[
+  ["우리 학과에 지원한 이유와 입학 후 공부하고 싶은 분야를 말해 주세요.",["1학년 '돈의 속성' 독서 → 사업가 목표","마케팅·브랜딩·소비자행동으로 좁혀진 과정","학년별 대표 활동 1~2개로 근거","입학 후 배우고 싶은 과목·분야"],"졸업 후 구체적으로 어떤 일을 하고 싶나요?"],
+  ["1분 동안 자기소개를 해 주세요.",["한 문장 정체성(소비자 심리로 브랜드를 설계하는 사람 등)","대표 활동 2개: 문제 → 행동 → 배운 점","지원 학과와 연결하며 마무리"],"방금 말한 활동 중 가장 힘들었던 순간은?"]]},
+ {g:0,a:"공통",t:"행동특성 — 리더십·자기관리",d:"2학년 행발: 평소 차분하나 프로젝트에서 열정적, 리더십, 체계적 자기관리. 2학년 방한단 토론 조장, 영어II 조별프로젝트 리더 역할.",q:[
+  ["선생님이 '평소엔 차분하지만 프로젝트에선 열정적'이라고 쓰셨는데, 그런 모습이 드러난 사례가 있나요?",["구체적 프로젝트 하나(방한단 토론 조장 등)","차분함 → 몰입으로 바뀌는 계기","팀원에게 준 영향"],"리더를 맡았을 때 갈등은 어떻게 해결했나요?"]]},
+ {g:0,a:"성적",t:"2학년 2학기 성적 변화",d:"2학년 1→2학기: 한국사3→4, 영어3→4, 동아시아사3→4, 경제3→4. 3학년 1학기 생활과윤리1, 영어독해작문2.",q:[
+  ["2학년 2학기에 여러 과목 등급이 한 단계씩 내려갔는데, 이유와 이후 어떻게 대처했나요?",["원인을 핑계 없이 짧게 인정","공부 방식에서 바꾼 점(오답분석 등)","3학년 결과: 생활과윤리 1등급, 영어독해작문 2등급"],"경제 과목 등급이 4등급인데 경제·경영 공부에 문제는 없을까요?","변명이 길어지지 않게. 원인 1문장 → 변화 → 결과 순서로."]]},
+ {g:0,a:"성적",t:"일본어 성적",d:"일본어I 5/5등급. 세특: 소원적는풍경, 히라가나 이미지메이킹, 유카타체험, 일본어 입력. 2학년 자율 일본 고교생 방한단 교류.",q:[
+  ["일본어 성적은 낮은데 일본 학생 교류에선 적극적이었네요. 어떻게 설명하겠어요?",["성적과 별개로 얻은 경험(방한단 토론 조장)","언어 장벽을 번역기·쉬운 설명으로 넘은 방법","부족한 점을 인정하는 태도"],"외국어 실력이 경영자에게 얼마나 중요하다고 보나요?"]]},
+ {g:0,a:"공통",t:"봉사활동",d:"봉사 1학년 9시간(소양교육/환경교육/축제준비/수능시험장 설치), 2학년 8시간, 3학년 3시간.",q:[
+  ["봉사시간이 많지 않은 편인데, 공동체를 위해 한 활동이 있다면 말해 주세요.",["시간 대신 내용으로: 학급규칙 만들기, 축제 준비, 수능시험장 설치","고령화 사회적기업 사업계획서처럼 공동체 문제를 다룬 탐구","앞으로의 계획"],"대학에서 해보고 싶은 공동체 활동은?"]]},
+
+ {g:1,a:"자율",n:1,t:"찾아가는 경제교육",d:"1학년 자율: 화폐박물관, 중앙은행 역사·역할, 물가안정 교육.",q:[
+  ["경제교육에서 중앙은행의 역할을 배웠는데, 중앙은행은 물가를 어떻게 안정시키나요?",["기준금리 조절 → 대출·소비 변화","통화량 관리","물가가 오르면 구매력이 떨어지는 이유","경제에 관심을 갖게 된 계기로 연결"],"금리가 오르면 기업의 마케팅 전략은 어떻게 바뀌어야 할까요?"]]},
+ {g:1,a:"동아리",n:2,t:"통상교육 — 소득불평등·인구부족",d:"1학년 국제경제통상 동아리: 통상교육에서 소득불평등, 인구부족 문제 학습.",q:[
+  ["통상교육에서 다룬 소득불평등과 인구부족, 두 문제는 어떻게 연결된다고 보나요?",["양육·교육비 부담 → 출산 감소 고리","인구감소 → 내수시장 축소 → 기업 영향","학습하며 든 본인 생각"],"인구가 줄어드는 시장에서 기업은 무엇을 해야 할까요?","학생부 표현은 '학습'. 본인이 정책을 제안했다는 식으로 역할을 키우지 말 것."]]},
+ {g:1,a:"동아리",n:17,t:"글로벌토크쇼 — 북극항로 스마트 물류기업",d:"러시아 패널과 한-러 협업 사업계획서: 북극항로 기반 스마트 물류기업. 기후변화로 열리는 아시아-유럽 물류 통로. 러시아 쇄빙선 기술·항로 데이터 + 한국 자율운항·스마트항만·5G/6G 물류관제 결합. 우즈베키스탄·튀르키예·베트남·방글라데시 패널, 글로벌기업 설계 발표.",q:[
+  ["러시아와 협업하는 사업으로 북극항로 물류기업을 구상한 이유는 무엇인가요?",["기후변화로 열리는 아시아-유럽 단축 항로","러시아: 쇄빙선 기술·항로 데이터","한국: 자율운항·스마트항만·5G/6G 관제","서로 부족한 걸 채우는 협업 구조"],"제재나 지정학 리스크가 큰데, 실제 사업이라면 어떻게 대비하겠어요?"]]},
+ {g:1,a:"진로",n:4,t:"창업활동 — 시니어 생활지원 사회적기업",d:"고령화 사회적기업 사업계획서: 시니어 맞춤형 생활지원·일자리연계 플랫폼. 영시니어를 생활매니저로 양성해 고독사위험가구 돌봄, 주거환경 안전진단. 지자체 바우처+구독모델 수익구조.",q:[
+  ["사회적기업 사업계획서의 수익구조를 설명해 주세요.",["영시니어 = 일자리, 고독사위험가구 = 돌봄 수요","생활매니저·주거 안전진단 서비스","지자체 바우처 + 구독 모델","공익과 수익의 동시 달성"],"바우처 예산이 줄면 이 사업은 어떻게 버틸 수 있나요?"]]},
+ {g:1,a:"진로",n:5,t:"모의주식투자 — 테슬라",d:"1학년 진로: 모의주식투자(테슬라 조사). 2학년 경제 세특: 공격형 투자, AI·반도체 집중, 분산투자전략.",q:[
+  ["모의투자에서 공격형으로 AI·반도체에 집중했다면서 분산투자 전략도 썼다고 했는데, 어떻게 함께 가능했나요?",["산업 집중 vs 종목 분산 구분","테슬라 조사에서 시작된 관심","수익보다 배운 리스크 관리"],"실제로 손실을 봤다면 무엇을 바꿨을 것 같아요?"]]},
+ {g:1,a:"세특",n:3,t:"기업가정신 — 전문가상담앱 SWOT",d:"자율교육과정 '기업가정신(창업과 스타트업)': 전문가상담앱서비스 사업계획서, SWOT(강점 시공간 제약 없는 접근성, 약점 초기 인지도 부족, 기회 비대면 1:1 상담시장 성장, 위협 대형 플랫폼 경쟁) → 20대 취준생으로 타깃 좁힘.",q:[
+  ["상담앱 SWOT 분석 후 타깃을 20대 취준생으로 좁힌 이유는?",["S 접근성 / W 초기 인지도 / O 비대면 상담 성장 / T 대형 플랫폼","대형 플랫폼과 정면 경쟁 회피","인지도 약점을 좁은 타깃으로 보완"],"20대 취준생에게 처음 알리는 마케팅은 어떻게 하겠어요?"]]},
+ {g:1,a:"세특",t:"'돈의 속성' 독서",d:"1학년 국어: '돈의 속성(김승호)' 독서 후 사업가 목표 재설정, 용돈관리·주식투자 시작.",q:[
+  ["'돈의 속성'을 읽고 실제로 바뀐 행동이 있나요?",["사업가 목표 재설정","용돈관리·주식투자 시작","책의 핵심 메시지 한 가지"],"돈을 버는 것과 좋은 기업을 만드는 것, 무엇이 먼저라고 보나요?"]]},
+ {g:1,a:"진로",t:"'국부론' 독서",d:"1학년 진로독서: '세일즈맨(유은지)', '국부론(애덤 스미스)'.",q:[
+  ["'국부론'에서 기억에 남는 개념과 오늘날 기업에 주는 의미는?",["분업·보이지 않는 손 중 하나","오늘날 시장·기업 사례에 적용","한계도 함께 언급하면 좋음"],"보이지 않는 손이 실패하는 경우는 어떤 때일까요?"]]},
+
+ {g:2,a:"자율",t:"일본 고교생 방한단 교류",d:"2학년 자율: 일본 친구들이 각 반 수업 함께 들음. 국어 시간 일본 친구 포함 조의 조장, 『운수 좋은 날』 토론 진행. 번역기 활용·어려운 단어 쉽게 풀이·시대 맥락 설명. 배운 점: 리더십은 서로의 배경을 이해하고 다양한 관점을 엮는 조율 능력.",q:[
+  ["일본 학생과 함께한 토론에서 조장으로서 가장 어려웠던 점과 해결 방법은?",["일본 친구들이 『운수 좋은 날』 내용을 이해 못함","번역기 + 쉬운 단어 + 시대 맥락 설명","배운 점: 리더십 = 관점을 엮는 조율"],"그 경험이 다국적 팀에서 일할 때 어떻게 쓰일까요?"]]},
+ {g:2,a:"동아리",t:"EU 탄소국경조정제도",d:"2학년 국제경제통상부: EU 탄소국경조정제도-한국무역 영향 보고서·발표. ESG특강(그린워싱 비판), 넛지이론, 복리 재정의.",q:[
+  ["EU 탄소국경조정제도가 한국 수출기업에 어떤 영향을 준다고 분석했나요?",["탄소 배출량 많은 수입품에 비용 부과","철강 등 탄소집약 업종 부담","기업 대응: 감축 투자·데이터 관리"],"이 제도가 보호무역이라는 비판에 대해 어떻게 생각하나요?"]]},
+ {g:2,a:"진로",n:6,t:"학습용 도서 공유 플랫폼",d:"2학년 진로활동: 학습용 도서 공유 플랫폼 프로젝트.",q:[
+  ["도서 공유 플랫폼 프로젝트에서 어떤 문제를 해결하려 했고, 본인은 무엇을 했나요?",["문제 정의(교재 비용·버려지는 책 등)","플랫폼 작동 방식","본인 역할과 결과"],"사용자가 책을 안 돌려주면 어떻게 하죠?","세부는 노션 정리노트 ⑥ 기준으로. 학생부에 없는 성과(실제 이용자 수 등)는 말하지 말 것."]]},
+ {g:2,a:"세특",n:7,t:"경제 — 신생 브랜드 가격전략(산산기어)",d:"가격결정 단원 후 중고시장 활성화가 신생상표 가격전략에 미치는 영향 탐구. 산산기어 사례, PUMA 콜라보 시기. 저가 형성 → 기준가격 하락 → 정가 저항↑ → 수익구조 불안정, 연역적 분석. 기업에 이메일 질의(회신 못 받음).",q:[
+  ["중고시장 활성화가 신생 브랜드 가격전략에 어떤 영향을 준다고 결론 내렸나요?",["중고 저가 형성 → 소비자 기준가격 하락","정가 구매 저항 ↑ → 수익구조 불안정","PUMA 콜라보 시기 산산기어 사례","연역적 분석 + 기업에 직접 질의"],"기업 회신을 못 받았는데 결론을 어떻게 신뢰할 수 있죠?"],
+  ["본인이 산산기어 마케팅 담당자라면 중고시장 문제에 어떻게 대응하겠어요?",["리셀 자체를 막기보다 브랜드 가치 관리","정품 인증·공식 리셀 등 가격 신호 관리","탐구에서 나온 기준가격 개념과 연결"],"오히려 리셀 열기가 브랜드에 이익인 경우는 없을까요?"]]},
+ {g:2,a:"세특",t:"군중심리 독서",d:"2학년 윤리와사상: 군중심리(귀스타브 르봉) 독서, 칸트 적용한 계급화·빈부격차 분석. 3학년 진로: 같은 책 '현명한 존재는 무리에 섞이지 않는다' 독서, 책 개념을 SNS 알고리즘 현상에 본인이 적용.",q:[
+  ["『군중심리』 내용을 SNS 알고리즘과 연결한 이유는?",["르봉: 군중 속 개인은 판단력이 약해짐","오늘날 알고리즘이 비슷한 반응을 증폭","마케터로서의 시사점과 윤리"],"이런 군중심리를 마케팅에 이용하는 건 괜찮은가요?","책에 SNS 내용은 없음. '책 개념을 제가 현대 현상에 적용했다'고 말할 것."]]},
+ {g:2,a:"세특",t:"수학 — 등비수열·한계비용",d:"수학I: 등차·등비수열 구조적 차이, 저축/금융 실생활 적용. 동아리 '복리 재정의'. 수학II: 함수의 극한·한계비용, 경영학 이론 결합.",q:[
+  ["수학II에서 극한을 한계비용과 연결했는데, 한계비용이 경영에서 왜 중요하죠?",["생산 1단위 추가 비용 = 미분 개념","가격·생산량 결정 기준","등비수열-복리처럼 수학을 경제에 적용한 다른 사례"],"한계비용이 거의 0인 디지털 상품은 가격을 어떻게 정해야 할까요?"]]},
+ {g:2,a:"세특",t:"진로영어 — 브랜드 정체성",d:"진로영어: 영문기사 분석(브랜드 정체성, 미국 관세정책, 대선 사전투표), 나만의 브랜드/로고 구상, 미래 이력서 쓰기, AI로 이재용 가상인터뷰 구성.",q:[
+  ["진로영어에서 구상한 나만의 브랜드를 소개하고, 브랜드 정체성을 어떻게 정의했는지 말해 주세요.",["브랜드 정체성 기사에서 얻은 개념","본인 브랜드의 핵심 가치·타깃","로고에 담은 의미"],"좋은 브랜드와 유명한 브랜드의 차이는 뭘까요?"]]},
+ {g:2,a:"세특",t:"교과융합 — 영시 'Refugees'",d:"영시 'Refugees(Brian Bilston)' — 난민수용 국제사회 찬반 비교·윤리쟁점 보고서.",q:[
+  ["'Refugees' 시를 읽고 난민 수용 찬반을 비교했는데, 본인 입장은?",["시의 구조(거꾸로 읽으면 뜻이 바뀜)","찬반 근거 한 가지씩","경제적 관점(노동력·사회비용) 추가"],"기업이 난민 고용에 참여한다면 어떤 효과가 있을까요?"]]},
+
+ {g:3,a:"자율",t:"'세계와 나' — 외국인근로자와 경제적 상생",d:"3학년 자율: 학급특색 국제갈등-경제협력 모둠탐구(유럽통합/한중무역/미중갈등), '세계와 나' 프로젝트(외국인근로자 유입-경제적 상생, UN지속가능발전목표).",q:[
+  ["외국인근로자 유입이 경제적 상생이 되려면 어떤 조건이 필요하다고 봤나요?",["인력 부족 업종 보완","공정한 처우·정착 지원","UN SDGs와 연결"],"미중갈등이 한국 기업에 주는 기회는 무엇일까요?"]]},
+ {g:3,a:"진로",n:8,t:"패스트패션 샘플제작 개선",d:"주제탐구 '패스트패션 샘플제작 환경개선을 통한 환경오염 감축 및 원가절감 방안'. 진로활동①: 매몰비용·물류탄소배출 분석, 아디다스 3D 가상 프로토타이핑·한섬 디지털 의류제작 사례, 구독형 가상샘플링 플랫폼·공공원단DB 제안, 샘플 업사이클링 보고서.",q:[
+  ["샘플 제작을 바꾸면 환경오염과 원가를 동시에 줄일 수 있다고 본 근거는?",["버려지는 샘플 = 매몰비용 + 물류 탄소","아디다스 3D 프로토타이핑, 한섬 디지털 의류","구독형 가상샘플링 플랫폼·공공원단DB 제안","업사이클링"],"초기 투자비 때문에 중소 브랜드는 못 쓰지 않을까요?"]]},
+ {g:3,a:"동아리",n:9,t:"전쟁·공급망위기와 의류기업 영업이익률",d:"시사탐구부: 전쟁-공급망위기가 의류기업 영업이익률에 미치는 영향, 물가상승기 소비자 손실회피성향·브랜드가치.",q:[
+  ["전쟁 같은 공급망 위기가 의류기업 영업이익률을 어떻게 떨어뜨리나요?",["원자재·물류비 상승 → 원가 ↑","가격 전가 한계 → 마진 축소","손실회피성향: 소비자는 인상에 민감","브랜드가치가 높으면 가격 전가가 쉬움"],"원가가 오를 때 가격을 올릴지, 품질을 줄일지 어떻게 결정하겠어요?","시사탐구부는 작년 활동. '최근에'처럼 시기를 섞지 말 것."]]},
+ {g:3,a:"동아리",n:10,t:"생성형AI 마케팅 윤리 가이드라인",d:"시사탐구부: 생성형AI 마케팅 윤리 가이드라인, 자율규제안 제안. 정리노트: AI 광고 표시 의무는 광고주에게, 미표시 광고를 방치한 플랫폼도 공동 책임.",q:[
+  ["AI로 만든 광고가 소비자를 속였다면 누가 책임져야 한다고 보나요?",["광고주·대행사·플랫폼 중 책임 주체 문제","표시 의무는 이익을 보는 광고주","방치한 플랫폼 공동 책임","법 규제보다 빠른 자율규제안"],"자율규제가 지켜지지 않으면 어떻게 하죠?"]]},
+ {g:3,a:"세특",n:11,t:"마케팅과광고 — 구도심 상권분석",d:"마케팅과광고(공동교육과정): 자기소개 광고활동, 구도심 상권분석(야시장/밤거리관광), 해외 패션브랜드 SWOT·STP·4P 분석보고서, 아시아 여행상품기획 팀프로젝트.",q:[
+  ["구도심 상권을 살리는 방안으로 야시장·밤거리관광을 제안한 이유는?",["구도심의 문제(낮 유동인구 부족 등)","야간 콘텐츠로 체류시간 ↑","교과융합 유동인구-매출 통계와 연결"],"야시장이 한때 유행으로 끝나지 않게 하려면?"]]},
+ {g:3,a:"세특",n:12,t:"해외 패션브랜드 SWOT·STP·4P",d:"마케팅과광고: 해외 패션브랜드 SWOT·STP·4P 분석보고서.",q:[
+  ["분석한 패션브랜드의 STP를 설명하고, 4P 중 가장 개선이 필요한 부분을 꼽아 주세요.",["브랜드명과 선택 이유","세분화 → 타깃 → 포지셔닝","4P 중 하나를 골라 근거와 개선안"],"그 브랜드가 한국 시장에 들어온다면 무엇을 바꿔야 할까요?"]]},
+ {g:3,a:"세특",n:13,t:"아시아 여행상품기획 팀프로젝트",d:"마케팅과광고: 아시아 여행상품기획 팀프로젝트.",q:[
+  ["여행상품을 기획할 때 타깃 고객을 어떻게 정했고, 본인은 팀에서 무엇을 맡았나요?",["타깃 설정 근거","상품의 차별점","본인 역할과 팀 협업 방식"],"팀원과 의견이 갈렸을 때 어떻게 정리했나요?"]]},
+ {g:3,a:"세특",n:14,t:"생활과과학 — 한정판의 유혹",d:"생활과과학: '한정판의 유혹' — 측좌핵 보상예측오류, 희소성 마케팅 기업윤리.",q:[
+  ["사람들이 한정판에 끌리는 이유를 뇌과학으로 설명해 주세요.",["측좌핵·도파민 보상 시스템","보상예측오류: 예상보다 큰 보상에 반응","희소성 마케팅의 윤리 문제"],"희소성 마케팅은 소비자 기만일까요, 정당한 전략일까요?"]]},
+ {g:3,a:"세특",n:15,t:"교과융합 — 유동인구와 상권매출",d:"교과융합프로젝트: 유동인구가 상권매출에 미치는 영향 통계적추정·경영적분석(신뢰구간, 표본 우편향 인식).",q:[
+  ["유동인구와 상권매출 분석에서 표본이 한쪽으로 치우쳤다는 걸 어떻게 알았고, 결론에 어떤 영향을 줬나요?",["신뢰구간으로 매출 추정","표본 우편향 인식","한계를 인정한 해석"],"유동인구가 많아도 매출이 낮은 상권은 왜 그럴까요?"]]},
+ {g:3,a:"세특",n:16,t:"확률과통계 — CPI 신뢰구간",d:"확률과통계: 조건부확률·표본평균 신뢰구간, '벌거벗은 통계학(찰스 윌런)' 독서(평균회귀-경영성과평가 적용), CPI 변동 통계분석(95%신뢰구간, 선제경보시스템 제안).",q:[
+  ["CPI 분석에서 95% 신뢰구간을 이용해 어떤 경보시스템을 제안했나요?",["95% 신뢰구간의 의미","구간을 벗어나면 이상 신호","기업이 가격·재고 결정에 쓰는 방법"],"평균회귀 개념을 경영성과 평가에 적용하면 어떤 오류를 막을 수 있죠?"]]},
+ {g:3,a:"세특",t:"경제수학 — 라퍼곡선·행동경제학",d:"경제수학: 법인세와 기업구조(라퍼곡선, 한계세율), 한국은행 기준금리 기사분석, '행동경제학' 독서(기댓값+심리적가중치).",q:[
+  ["라퍼곡선으로 법인세 인하 효과를 설명할 수 있을까요?",["세율 ↑ → 어느 지점 이후 세수 ↓","한계세율과 기업 투자 결정","현실 적용의 한계"],"행동경제학에서 말하는 심리적 가중치는 기댓값 계산과 어떻게 다른가요?"]]},
+ {g:3,a:"세특",t:"영어독해와작문 — AI 동적 가격책정",d:"영어독해와작문: 오답분석 포트폴리오, 학문융합에세이(경영학+AI 동적 가격책정).",q:[
+  ["AI 동적 가격책정의 장점과 소비자 입장에서의 문제점은?",["수요에 따라 실시간 가격 조정","수익·재고 최적화","가격 차별·불신 문제"],"공정하게 쓰려면 어떤 기준이 필요할까요?"]]},
+ {g:3,a:"세특",t:"그린워싱 — 정치와법·생활과윤리",d:"정치와법: 그린워싱 규제 탐구계획(공정거래위원회 표시광고법). 생활과윤리: '그린워싱과 소비자 기만' 보고서(칸트 의무론/공리주의). 2학년 ESG특강 그린워싱 비판.",q:[
+  ["그린워싱을 여러 과목에서 다뤘는데, 법과 윤리 관점에서 각각 어떻게 봤나요?",["법: 공정위 표시광고법 규제","윤리: 칸트 의무론(속임 자체가 잘못) vs 공리주의(결과)","2학년 ESG특강부터 이어진 관심"],"마케터로서 친환경 메시지를 정직하게 전하는 방법은?"]]},
+ {g:3,a:"세특",t:"사회문화 — 노사갈등",d:"사회문화: 노사갈등 갈등론적 분석(대기업 사례, 노사공동결정제 제안), 문화자본 대물림 논술(부르디외 아비투스). 생활과윤리: '알고리즘 경영시대의 노동효율성과 인간존엄성'.",q:[
+  ["노사갈등 해법으로 노사공동결정제를 제안한 이유는?",["갈등론 관점: 이해관계 충돌은 구조적","노동자 경영 참여로 신뢰 확보","도입 시 한계(의사결정 지연 등)"],"알고리즘이 노동자를 관리하는 시대에 인간존엄성은 어떻게 지킬 수 있을까요?"]]},
+ {g:3,a:"세특",t:"토론과논술 — 최저임금 인상",d:"토론과논술활용: 촉법소년 연령하향 논설문, 최저임금인상 찬성글.",q:[
+  ["최저임금 인상에 찬성하는 글을 썼는데, 자영업자 부담에 대해선 어떻게 반박하나요?",["찬성 근거: 소득 → 소비 증가","반론 인정: 소상공인 비용 부담","보완책 제시"],"경영자가 된다면 같은 입장을 유지할 건가요?"]]}
+];
+
+const AREAS = [["all","전체"],["cc","창체"],["se","세특"],["co","공통·성적"]];
+const areaGroup = a => (a==="자율"||a==="동아리"||a==="진로")?"cc":(a==="세특"?"se":"co");
+const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰";
+
+// flatten
+const QS = [];
+ACTS.forEach((act,ai)=>act.q.forEach((x,qi)=>QS.push({id:ai+"-"+qi,act,q:x[0],p:x[1],f:x[2],c:x[3]||""})));
+
+const $ = id => document.getElementById(id);
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+const state = {grade:store.get("grade","all"),area:store.get("area","all"),onlyDone:store.get("onlyDone",false),fresh:store.get("fresh",true),len:store.get("len",90),practiced:new Set(store.get("practiced",[])),cur:null};
+$("univ").value = store.get("univ","인천대 경영학과");
+
+// ---- filters
+function chipRow(el,items,getter,setter){
+  el.innerHTML="";
+  items.forEach(([v,label])=>{const b=document.createElement("button");b.className="chip";b.textContent=label;b.setAttribute("aria-pressed",String(getter()===v));b.onclick=()=>{setter(v);chipRow(el,items,getter,setter);};el.appendChild(b);});
+}
+chipRow($("fGrade"),[["all","전체"],["1","1학년"],["2","2학년"],["3","3학년"],["0","공통"]],()=>state.grade,v=>{state.grade=v;store.set("grade",v)});
+chipRow($("fArea"),AREAS,()=>state.area,v=>{state.area=v;store.set("area",v)});
+function toggle(id,key){const b=$(id);b.setAttribute("aria-pressed",String(state[key]));b.onclick=()=>{state[key]=!state[key];store.set(key,state[key]);b.setAttribute("aria-pressed",String(state[key]));};}
+toggle("fDone","onlyDone");toggle("fFresh","fresh");
+$("univ").onchange=()=>store.set("univ",$("univ").value);
+
+function pool(){
+  return QS.filter(x=>(state.grade==="all"||String(x.act.g)===state.grade)&&(state.area==="all"||areaGroup(x.act.a)===state.area)&&(!state.onlyDone||x.act.n));
+}
+function draw(){
+  let p = pool();
+  if(!p.length){p=QS;}
+  if(state.fresh){const fresh=p.filter(x=>!state.practiced.has(x.id));if(fresh.length)p=fresh;}
+  if(p.length>1&&state.cur)p=p.filter(x=>x.id!==state.cur.id);
+  show(p[Math.floor(Math.random()*p.length)]);
+}
+
+// ---- card
+function tag(text,cls){const s=document.createElement("span");s.className="tag"+(cls?" "+cls:"");s.textContent=text;return s;}
+function show(item){
+  stopFeedback();resetTimer();
+  state.cur=item;
+  const m=$("meta");m.innerHTML="";
+  const act=item.act;
+  if(item.ai)m.appendChild(tag(item.ai,"ai"));
+  if(act){m.appendChild(tag(act.g?act.g+"학년":"공통"));m.appendChild(tag(act.a));if(act.n)m.appendChild(tag("정리노트 "+CIRCLED[act.n-1],"done"));}
+  $("source").textContent=item.src||(act?act.t:"");
+  $("question").textContent=item.q;
+  $("intent").hidden=!item.intent;$("intent").textContent=item.intent?"평가 의도 · "+item.intent:"";
+  $("points").innerHTML="";item.p.forEach(t=>{const li=document.createElement("li");li.textContent=t;$("points").appendChild(li);});
+  $("caution").textContent=item.c||"";
+  $("follow").textContent=item.f||"";
+  $("pPoints").hidden=true;$("pCaution").hidden=true;$("pFollow").hidden=true;
+  $("btnPoints").textContent="핵심 포인트";$("btnFollow").textContent="꼬리질문";
+  $("answer").value="";$("fbWrap").hidden=true;
+  const pr=!!item.id&&state.practiced.has(item.id);
+  $("btnDone").setAttribute("aria-pressed",String(pr));$("btnDone").textContent=pr?"연습 완료됨":"연습 완료";$("btnDone").disabled=!item.id;
+  $("btnGen").disabled=!act;
+  $("aiNote").textContent="";
+  renderIndex();
+}
+$("btnPoints").onclick=()=>{const h=!$("pPoints").hidden;$("pPoints").hidden=h;$("pCaution").hidden=h||!state.cur.c;$("btnPoints").textContent=h?"핵심 포인트":"포인트 숨기기";};
+$("btnFollow").onclick=()=>{const h=!$("pFollow").hidden;$("pFollow").hidden=h;$("btnFollow").textContent=h?"꼬리질문":"꼬리질문 숨기기";};
+$("btnNext").onclick=draw;
+$("btnDone").onclick=()=>{const c=state.cur;if(!c||!c.id)return;if(state.practiced.has(c.id))state.practiced.delete(c.id);else state.practiced.add(c.id);store.set("practiced",[...state.practiced]);const pr=state.practiced.has(c.id);$("btnDone").setAttribute("aria-pressed",String(pr));$("btnDone").textContent=pr?"연습 완료됨":"연습 완료";renderIndex();};
+
+// ---- timer
+let tStart=0,tTimer=null;
+const fmt=s=>{const neg=s<0;s=Math.abs(Math.round(s));return (neg?"+":"")+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+function renderLen(){chipRow($("tLen"),[[60,"60초"],[90,"90초"],[120,"2분"]],()=>state.len,v=>{state.len=v;store.set("len",v);if(!tTimer)resetTimer();});}
+function resetTimer(){clearInterval(tTimer);tTimer=null;$("clock").textContent=fmt(state.len);$("clock").classList.remove("over");$("tbar").classList.remove("over");$("tfill").style.width="0";$("tBtn").textContent="답변 시작";}
+function tick(){const el=(Date.now()-tStart)/1000,left=state.len-el;$("clock").textContent=fmt(left);const over=left<0;$("clock").classList.toggle("over",over);$("tbar").classList.toggle("over",over);$("tfill").style.width=Math.min(100,el/state.len*100)+"%";}
+$("tBtn").onclick=()=>{if(tTimer){clearInterval(tTimer);tTimer=null;$("tBtn").textContent="다시 시작";}else{if($("tBtn").textContent==="다시 시작")resetTimer();tStart=Date.now();tTimer=setInterval(tick,250);$("tBtn").textContent="멈추기";}};
+renderLen();
+
+// ---- index
+function renderIndex(){
+  $("doneCount").textContent=state.practiced.size;$("totalCount").textContent=QS.length;
+  $("doneBar").style.width=(state.practiced.size/QS.length*100)+"%";
+  const open=new Set([...document.querySelectorAll("#index details[open]")].map(d=>d.dataset.g));
+  const box=$("index");box.innerHTML="";
+  [["0","공통·성적"],["1","1학년"],["2","2학년"],["3","3학년"]].forEach(([g,label])=>{
+    const list=QS.filter(x=>String(x.act.g)===g);
+    const d=document.createElement("details");d.dataset.g=g;if(open.has(g))d.open=true;
+    const s=document.createElement("summary");s.innerHTML="<span></span><span class='num'></span>";s.children[0].textContent=label;s.children[1].textContent=list.filter(x=>state.practiced.has(x.id)).length+" / "+list.length;
+    d.appendChild(s);const ul=document.createElement("ul");ul.className="qlist";
+    list.forEach(x=>{const li=document.createElement("li");const b=document.createElement("button");b.className="qlink"+(state.practiced.has(x.id)?" practiced":"");
+      b.innerHTML="<span class='dot'></span><span></span>";const t=b.children[1];t.textContent=x.q;const sm=document.createElement("small");sm.textContent=x.act.a+" · "+x.act.t;t.appendChild(sm);
+      b.onclick=()=>{show(x);$("card").scrollIntoView({behavior:"smooth",block:"start"});};li.appendChild(b);ul.appendChild(li);});
+    d.appendChild(ul);box.appendChild(d);
+  });
+}
+
+// ---- AI (sample)
+let sample=null,fbCtl=null;
+const errCopy=c=>({rate_limited:"요청이 많아요. 잠시 후 다시 눌러 주세요.",session_expired:"다시 로그인해 주세요.",refused:"이 요청엔 답할 수 없대요. 질문을 바꿔 보세요.",invalid_json:"형식이 깨졌어요. 한 번 더 눌러 주세요.",empty_completion:"답이 비었어요. 다시 시도해 주세요."}[c]||"연결이 끊겼어요. 다시 시도해 주세요.");
+const HIDE=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"];
+function hideAI(){$("aiRow").hidden=true;$("btnFeedback").hidden=true;$("aiNote").textContent="";}
+function actText(a){return "["+(a.g?a.g+"학년 ":"")+a.a+"] "+a.t+": "+a.d;}
+
+(async()=>{
+  try{sample=window.claude?await window.claude.use("sample"):null;}catch(e){sample=null;}
+  if(!sample)return;
+  $("aiRow").hidden=false;$("btnFeedback").hidden=false;
+})();
+
+async function genQuestion(acts,label){
+  const univ=$("univ").value;
+  $("btnGen").disabled=true;$("btnMix").disabled=true;$("aiNote").textContent="질문 만드는 중…";
+  const prompt=`너는 ${univ} 학생부종합 면접관이다. 아래 학생부 내용만 근거로 개별면접 질문 1개를 만든다.
+규칙:
+- 학생부에 없는 활동·역할·성과를 지어내지 않는다.
+- ${acts.length>1?"두 활동을 연결해 사고력과 일관성을 보는 질문으로 만든다.":"같은 활동이라도 '배운 점이 뭔가요' 같은 뻔한 질문 대신, 개념 이해·한계·적용을 확인하는 구체적 질문으로 만든다."}
+- 한국어 면접관 말투(존댓말), 한두 문장.
+JSON 하나로만 답한다: {"question":"질문","intent":"평가 의도 한 문장","points":["답변에 담을 핵심 3~4개, 각 25자 이내"],"follow":"꼬리질문 1개"}
+
+학생 정보: ${PROFILE}
+활동:
+${acts.map(actText).join("\n")}`;
+  try{
+    const r=await sample.json(prompt,{cache:false});
+    if(!r||typeof r.question!=="string")throw{code:"invalid_json"};
+    show({ai:label,act:acts.length===1?acts[0]:null,src:acts.map(a=>a.t).join(" + "),q:r.question,intent:String(r.intent||""),p:Array.isArray(r.points)?r.points.map(String):[],f:String(r.follow||""),c:"",aiActs:acts});
+  }catch(e){
+    if(HIDE.includes(e.code)){hideAI();return;}
+    $("aiNote").textContent=errCopy(e.code);
+  }finally{$("btnGen").disabled=!(state.cur&&state.cur.act);$("btnMix").disabled=false;if($("aiNote").textContent==="질문 만드는 중…")$("aiNote").textContent="";}
+}
+$("btnGen").onclick=()=>{if(state.cur&&state.cur.act)genQuestion([state.cur.act],"AI 출제");};
+$("btnMix").onclick=()=>{
+  const cands=ACTS.filter(a=>a.g>0);
+  const a=cands[Math.floor(Math.random()*cands.length)];let b;do{b=cands[Math.floor(Math.random()*cands.length)];}while(b===a);
+  genQuestion([a,b],"AI 종합");
+};
+
+function stopFeedback(){if(fbCtl){fbCtl.abort();fbCtl=null;}$("fbStop").hidden=true;}
+function renderFb(text){
+  const box=$("feedback");box.textContent="";
+  text.split("\n").forEach((line,i)=>{
+    if(/^■/.test(line.trim())){const s=document.createElement("span");s.className="h";s.textContent=line.trim().replace(/^■\s*/,"");box.appendChild(s);}
+    else box.appendChild(document.createTextNode(line+"\n"));
+  });
+}
+$("fbStop").onclick=stopFeedback;
+$("btnFeedback").onclick=async()=>{
+  const ans=$("answer").value.trim();const cur=state.cur;
+  if(ans.length<20){$("fbWrap").hidden=false;renderFb("답변을 조금 더 적어 주세요. 말하려는 내용을 두세 문장 이상 쓰면 피드백할 수 있어요.");return;}
+  stopFeedback();fbCtl=new AbortController();
+  $("fbWrap").hidden=false;renderFb("답변 읽는 중…");$("fbStop").hidden=false;$("btnFeedback").disabled=true;
+  const acts=cur.aiActs||(cur.act?[cur.act]:[]);
+  const prompt=`너는 ${$("univ").value} 학생부종합 면접 코치다. 고3 학생의 답변을 평가한다.
+학생 정보: ${PROFILE}
+관련 학생부 내용:
+${acts.map(actText).join("\n")}
+
+면접 질문: ${cur.q}
+답변에 담기면 좋은 핵심: ${cur.p.join(" / ")}
+${cur.c?"주의사항: "+cur.c+"\n":""}학생 답변:
+"""${ans.slice(0,3000)}"""
+
+아래 형식 그대로, 한국어로 짧고 구체적으로 답한다. 각 제목은 줄 맨 앞에 ■ 를 붙인다. 마크다운 기호(#, *, **)는 쓰지 않는다.
+■ 점수: N/10 — 한 줄 총평
+■ 좋았던 점 (2개 이내)
+■ 보완할 점 (3개 이내, 빠진 핵심 키워드와 두괄식 여부 포함)
+■ 과장·사실 확인 (학생부에 없는 역할·성과·시기를 주장했으면 지적, 없으면 '없음')
+■ 다듬은 답변 (60~90초 분량, 학생 말투, 학생부에 있는 사실만 사용)
+■ 이어질 꼬리질문 1개`;
+  try{
+    await sample(prompt,{signal:fbCtl.signal,cache:false,onText:({text})=>renderFb(text)});
+  }catch(e){
+    if(e.code==="cancelled"){/* keep partial */}
+    else if(HIDE.includes(e.code)){hideAI();$("fbWrap").hidden=true;}
+    else{if(e.text)renderFb(e.text+"\n\n("+errCopy(e.code)+")");else renderFb(errCopy(e.code));}
+  }finally{fbCtl=null;$("fbStop").hidden=true;$("btnFeedback").disabled=false;}
+};
+
+draw();
+</script>
+
+</body>
+</html>
